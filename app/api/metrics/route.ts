@@ -91,7 +91,7 @@ export async function GET() {
     }
 
     const accounts: AccountSummary[] = [];
-    for (const account of accountMap.values()) {
+    Array.from(accountMap.values()).forEach((account) => {
       const dailySpend = dailySpendMap.get(account.key) || new Map<string, number>();
       const activeDays7 = Array.from(dailySpend.keys()).filter((dateStr) => {
         const date = new Date(dateStr);
@@ -130,7 +130,7 @@ export async function GET() {
         }
       }
       trendMap[account.key] = points;
-    }
+    });
 
     const totals = accounts.reduce(
       (acc, account) => {
