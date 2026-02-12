@@ -74,7 +74,7 @@ export default function HomePage() {
 
         <AccountTable accounts={data.accounts} />
 
-        <OptimizationTable rows={data.optimization} />
+        <OptimizationTable rows={data.optimization} meta={data.meta} />
       </div>
     </main>
   );

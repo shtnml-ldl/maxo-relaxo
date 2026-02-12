@@ -5,9 +5,16 @@ import { OptimizationRow } from '@/lib/types';
 
 interface OptimizationTableProps {
   rows: OptimizationRow[];
+  meta: {
+    latestDate: string;
+    monthStart: string;
+    last14Start: string;
+    last30Start: string;
+    last60Start: string;
+  };
 }
 
-export function OptimizationTable({ rows }: OptimizationTableProps) {
+export function OptimizationTable({ rows, meta }: OptimizationTableProps) {
   const [showDetails, setShowDetails] = useState(false);
   const formatCurrency = (value: number) =>
     `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -36,6 +43,11 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
           <h3 className="font-display text-lg text-ink">Optimized allocation</h3>
           <p className="text-sm text-gray-500">
             Recommended daily spend to maximize weighted ROAS and revenue
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Dates included: MTD {meta.monthStart} to {meta.latestDate}. ROAS windows: 14d{' '}
+            {meta.last14Start} to {meta.latestDate}, 30d {meta.last30Start} to {meta.latestDate}, 60d{' '}
+            {meta.last60Start} to {meta.latestDate}.
           </p>
         </div>
         <button

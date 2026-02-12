@@ -64,6 +64,10 @@ export interface MetricsResponse {
     latestDate: string;
     monthStart: string;
     monthEnd: string;
+    last7Start: string;
+    last14Start: string;
+    last30Start: string;
+    last60Start: string;
     daysElapsed: number;
     remainingDays: number;
   };

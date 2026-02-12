@@ -493,6 +493,10 @@ export async function GET() {
         latestDate: latestDate.toISOString().split('T')[0],
         monthStart: monthStart.toISOString().split('T')[0],
         monthEnd: monthEnd.toISOString().split('T')[0],
+        last7Start: last7Start.toISOString().split('T')[0],
+        last14Start: last14Start.toISOString().split('T')[0],
+        last30Start: last30Start.toISOString().split('T')[0],
+        last60Start: last60Start.toISOString().split('T')[0],
         daysElapsed,
         remainingDays
       },
