@@ -64,6 +64,7 @@ export interface MetricsResponse {
     latestDate: string;
     monthStart: string;
     monthEnd: string;
+    maxDateInCurrentMonth: string;
     last7Start: string;
     last14Start: string;
     last30Start: string;
