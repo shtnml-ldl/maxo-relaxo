@@ -9,6 +9,13 @@ interface OptimizationTableProps {
 export function OptimizationTable({ rows }: OptimizationTableProps) {
   const formatCurrency = (value: number) =>
     `EUR ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  const formatRoas = (value: number) => {
+    const percent = value * 100;
+    if (percent < 10) {
+      return `${percent.toFixed(1)}%`;
+    }
+    return `${percent.toFixed(0)}%`;
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -41,7 +48,7 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
                   {formatCurrency(row.optimizedAvgDailySpend)}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {row.monthToDateSpend > 0 ? `${(row.roas30 * 100).toFixed(1)}%` : 'N/A'}
+                  {row.monthToDateSpend > 0 ? formatRoas(row.roas30) : 'N/A'}
                 </td>
               </tr>
             ))}
