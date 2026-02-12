@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { OptimizationRow } from '@/lib/types';
 
 interface OptimizationTableProps {
@@ -7,6 +8,7 @@ interface OptimizationTableProps {
 }
 
 export function OptimizationTable({ rows }: OptimizationTableProps) {
+  const [showDetails, setShowDetails] = useState(false);
   const formatCurrency = (value: number) =>
     `EUR ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const formatRoas = (value: number, spend: number) => {
@@ -29,11 +31,20 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <h3 className="font-display text-lg text-ink">Optimized allocation</h3>
-        <p className="text-sm text-gray-500">
-          Recommended daily spend to maximize weighted ROAS and revenue
-        </p>
+      <div className="px-5 py-4 border-b border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h3 className="font-display text-lg text-ink">Optimized allocation</h3>
+          <p className="text-sm text-gray-500">
+            Recommended daily spend to maximize weighted ROAS and revenue
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowDetails((value) => !value)}
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 hover:border-gray-300 hover:text-gray-700"
+        >
+          {showDetails ? 'Hide trend details' : 'Show trend details'}
+        </button>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
@@ -44,12 +55,16 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
               <th className="px-4 py-3 text-right">Avg Daily (7d)</th>
               <th className="px-4 py-3 text-right">Optimized Avg Daily</th>
               <th className="px-4 py-3 text-right">Delta</th>
-              <th className="px-4 py-3 text-right">ROAS 14d</th>
               <th className="px-4 py-3 text-right">ROAS 30d</th>
-              <th className="px-4 py-3 text-right">ROAS 60d</th>
-              <th className="px-4 py-3 text-right">Spend 14/30/60</th>
-              <th className="px-4 py-3 text-right">Trend</th>
               <th className="px-4 py-3 text-right">Action</th>
+              {showDetails && (
+                <>
+                  <th className="px-4 py-3 text-right">ROAS 14d</th>
+                  <th className="px-4 py-3 text-right">ROAS 60d</th>
+                  <th className="px-4 py-3 text-right">Spend 14/30/60</th>
+                  <th className="px-4 py-3 text-right">Trend</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -74,19 +89,7 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
                       {row.avgDailySpend7 > 0 ? `${deltaPercent.toFixed(0)}%` : '—'}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right">{formatRoas(row.roas14, row.spend14)}</td>
                   <td className="px-4 py-3 text-right">{formatRoas(row.roas30, row.spend30)}</td>
-                  <td className="px-4 py-3 text-right">{formatRoas(row.roas60, row.spend60)}</td>
-                  <td className="px-4 py-3 text-right text-xs text-gray-500">
-                    <div>14d {formatCurrency(row.spend14)}</div>
-                    <div>30d {formatCurrency(row.spend30)}</div>
-                    <div>60d {formatCurrency(row.spend60)}</div>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full border text-xs text-gray-600">
-                      {row.trend}
-                    </span>
-                  </td>
                   <td className="px-4 py-3 text-right">
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded-full border text-xs ${actionClass(
@@ -96,6 +99,22 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
                       {row.action}
                     </span>
                   </td>
+                  {showDetails && (
+                    <>
+                      <td className="px-4 py-3 text-right">{formatRoas(row.roas14, row.spend14)}</td>
+                      <td className="px-4 py-3 text-right">{formatRoas(row.roas60, row.spend60)}</td>
+                      <td className="px-4 py-3 text-right text-xs text-gray-500">
+                        <div>14d {formatCurrency(row.spend14)}</div>
+                        <div>30d {formatCurrency(row.spend30)}</div>
+                        <div>60d {formatCurrency(row.spend60)}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full border text-xs text-gray-600">
+                          {row.trend}
+                        </span>
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}
