@@ -14,7 +14,7 @@ export function StatCards({
   forecastedMonthEndSpend
 }: StatCardsProps) {
   const formatCurrency = (value: number) =>
-    value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 
   const percentToTarget = targetTotal > 0 ? (monthToDateSpend / targetTotal) * 100 : 0;
 

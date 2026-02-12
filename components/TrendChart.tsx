@@ -23,7 +23,7 @@ export function TrendChart({ accounts, trends }: TrendChartProps) {
   const series = useMemo(() => trends[selectedKey] || [], [trends, selectedKey]);
 
   const formatCurrency = (value: number) =>
-    value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">

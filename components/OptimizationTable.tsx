@@ -10,7 +10,7 @@ interface OptimizationTableProps {
 export function OptimizationTable({ rows }: OptimizationTableProps) {
   const [showDetails, setShowDetails] = useState(false);
   const formatCurrency = (value: number) =>
-    value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   const formatRoas = (value: number, spend: number) => {
     if (spend <= 0) return 'N/A';
     const percent = value * 100;
