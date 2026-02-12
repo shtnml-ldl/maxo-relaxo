@@ -41,7 +41,7 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
                   {formatCurrency(row.optimizedAvgDailySpend)}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {row.roas7 > 0 ? `${row.roas7.toFixed(2)}x` : 'N/A'}
+                  {row.roas7 > 0 ? `${(row.roas7 * 100).toFixed(1)}%` : 'N/A'}
                 </td>
               </tr>
             ))}

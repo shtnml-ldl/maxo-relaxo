@@ -148,10 +148,15 @@ export async function GET() {
       }
     );
 
-    const remainingBudget = totals.targetTotal > 0
-      ? Math.max(0, totals.targetTotal - totals.monthToDateSpend)
-      : totals.monthToDateSpend;
-    const remainingDailyBudget = remainingDays > 0 ? remainingBudget / remainingDays : 0;
+    const runRateDailyBudget = totals.avgDailySpend7 > 0
+      ? totals.avgDailySpend7
+      : (daysElapsed > 0 ? totals.monthToDateSpend / daysElapsed : 0);
+
+    let optimizationDailyBudget = runRateDailyBudget;
+    if (totals.targetTotal > 0 && remainingDays > 0) {
+      const remainingDailyBudget = Math.max(0, totals.targetTotal - totals.monthToDateSpend) / remainingDays;
+      optimizationDailyBudget = Math.max(remainingDailyBudget, runRateDailyBudget);
+    }
 
     const optimization: OptimizationRow[] = [];
     const weights = accounts.map((account) => {
@@ -161,8 +166,8 @@ export async function GET() {
     const weightSum = weights.reduce((sum, value) => sum + value, 0) || 1;
 
     accounts.forEach((account, index) => {
-      const optimizedAvgDailySpend = remainingDailyBudget > 0
-        ? remainingDailyBudget * (weights[index] / weightSum)
+      const optimizedAvgDailySpend = optimizationDailyBudget > 0
+        ? optimizationDailyBudget * (weights[index] / weightSum)
         : account.avgDailySpend7;
 
       optimization.push({
