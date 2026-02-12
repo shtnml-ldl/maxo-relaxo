@@ -216,10 +216,53 @@ function getCell(row: any[], headers: string[], key: string): string {
 
 function parseNumber(value: any): number {
   if (value === null || value === undefined || value === '') return 0;
-  const cleaned = String(value).replace(/[,\\u00A3\\u20AC$]/g, '').trim();
-  const parsed = Number(cleaned);
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  let normalized = String(value).trim();
+  if (!normalized) return 0;
+  if (normalized.startsWith("'")) {
+    normalized = normalized.slice(1);
+  }
+  if (normalized.startsWith('"') && normalized.endsWith('"')) {
+    normalized = normalized.slice(1, -1);
+  }
+  normalized = normalized.replace(/[\s\u00A0\u202F]/g, '');
+
+  let isNegative = false;
+  if (normalized.startsWith('(') && normalized.endsWith(')')) {
+    isNegative = true;
+    normalized = normalized.slice(1, -1);
+  }
+
+  normalized = normalized.replace(/[^\d,.\-]/g, '');
+
+  const lastComma = normalized.lastIndexOf(',');
+  const lastDot = normalized.lastIndexOf('.');
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      normalized = normalized.replace(/\./g, '');
+      normalized = normalized.replace(',', '.');
+    } else {
+      normalized = normalized.replace(/,/g, '');
+    }
+  } else if (lastComma !== -1) {
+    const parts = normalized.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      normalized = `${parts[0].replace(/,/g, '')}.${parts[1]}`;
+    } else {
+      normalized = normalized.replace(/,/g, '');
+    }
+  } else if (lastDot !== -1) {
+    const parts = normalized.split('.');
+    if (parts.length > 2) {
+      const tail = parts.pop()!;
+      normalized = `${parts.join('')}.${tail}`;
+    }
+  }
+
+  const parsed = Number(normalized);
   if (Number.isNaN(parsed)) return 0;
-  return parsed;
+  return isNegative ? -parsed : parsed;
 }
 
 function normalizeSource(value: string): SourcePlatform | null {
