@@ -8,7 +8,7 @@ interface AccountTableProps {
 
 export function AccountTable({ accounts }: AccountTableProps) {
   const formatCurrency = (value: number) =>
-    `EUR ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    value.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
