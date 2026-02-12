@@ -19,6 +19,9 @@ export interface AccountSummary {
   source: SourcePlatform;
   target: number;
   monthToDateSpend: number;
+  monthToDateRevenue: number;
+  monthToDateBookings: number;
+  monthToDateClicks: number;
   avgDailySpend7: number;
   forecastedMonthEndSpend: number;
   last7DaySpend: number;

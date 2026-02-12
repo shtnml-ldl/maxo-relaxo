@@ -58,6 +58,9 @@ export async function GET() {
           source: row.source,
           target: targetKey,
           monthToDateSpend: 0,
+          monthToDateRevenue: 0,
+          monthToDateBookings: 0,
+          monthToDateClicks: 0,
           avgDailySpend7: 0,
           forecastedMonthEndSpend: 0,
           last7DaySpend: 0,
@@ -73,6 +76,9 @@ export async function GET() {
       const account = accountMap.get(key)!;
       if (row.date >= monthStart && row.date <= latestDate) {
         account.monthToDateSpend += row.spend;
+        account.monthToDateRevenue += row.eventValue;
+        account.monthToDateBookings += row.numberOfEvents;
+        account.monthToDateClicks += row.clicks;
       }
 
       if (row.date >= last7Start && row.date <= latestDate) {
@@ -100,8 +106,14 @@ export async function GET() {
 
       account.avgDailySpend7 = activeDays7 > 0 ? account.last7DaySpend / activeDays7 : 0;
       account.forecastedMonthEndSpend = account.monthToDateSpend + (account.avgDailySpend7 * remainingDays);
-      account.roas7 = account.last7DaySpend > 0 ? account.last7DayRevenue / account.last7DaySpend : 0;
-      account.convRate7 = account.last7DayClicks > 0 ? account.last7DayBookings / account.last7DayClicks : 0;
+      const roas7 = account.last7DaySpend > 0 ? account.last7DayRevenue / account.last7DaySpend : 0;
+      const roasMtd = account.monthToDateSpend > 0 ? account.monthToDateRevenue / account.monthToDateSpend : 0;
+      const convRate7 = account.last7DayClicks > 0 ? account.last7DayBookings / account.last7DayClicks : 0;
+      const convRateMtd = account.monthToDateClicks > 0
+        ? account.monthToDateBookings / account.monthToDateClicks
+        : 0;
+      account.roas7 = roas7 > 0 ? roas7 : roasMtd;
+      account.convRate7 = convRate7 > 0 ? convRate7 : convRateMtd;
       account.percentToTarget = account.target > 0 ? account.monthToDateSpend / account.target : 0;
       accounts.push(account);
 

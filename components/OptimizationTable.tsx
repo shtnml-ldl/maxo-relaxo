@@ -26,7 +26,7 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
               <th className="px-4 py-3 text-right">Spend MTD</th>
               <th className="px-4 py-3 text-right">Avg Daily (7d)</th>
               <th className="px-4 py-3 text-right">Optimized Avg Daily</th>
-              <th className="px-4 py-3 text-right">ROAS (7d)</th>
+              <th className="px-4 py-3 text-right">ROAS</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -41,7 +41,7 @@ export function OptimizationTable({ rows }: OptimizationTableProps) {
                   {formatCurrency(row.optimizedAvgDailySpend)}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {row.roas7 > 0 ? `${(row.roas7 * 100).toFixed(1)}%` : 'N/A'}
+                  {row.monthToDateSpend > 0 ? `${(row.roas7 * 100).toFixed(1)}%` : 'N/A'}
                 </td>
               </tr>
             ))}
