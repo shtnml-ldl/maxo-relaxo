@@ -27,9 +27,16 @@ export async function GET() {
       );
     }
 
-    const latestDate = rows.reduce((max, row) => (row.date > max ? row.date : max), rows[0].date);
-    const monthStart = new Date(latestDate.getFullYear(), latestDate.getMonth(), 1);
-    const monthEnd = new Date(latestDate.getFullYear(), latestDate.getMonth() + 1, 0);
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const latestInCurrentMonth = rows
+      .map((row) => row.date)
+      .filter((date) => date >= currentMonthStart && date <= currentMonthEnd)
+      .reduce((max, date) => (date > max ? date : max), currentMonthStart);
+    const latestDate = latestInCurrentMonth <= now ? latestInCurrentMonth : now;
+    const monthStart = currentMonthStart;
+    const monthEnd = currentMonthEnd;
     const msPerDay = 24 * 60 * 60 * 1000;
     const daysElapsed = Math.max(1, Math.floor((latestDate.getTime() - monthStart.getTime()) / msPerDay) + 1);
     const remainingDays = Math.max(0, Math.ceil((monthEnd.getTime() - latestDate.getTime()) / msPerDay));
