@@ -64,12 +64,12 @@ export class SheetsClient {
 
       if (hasTargetColumns) {
         for (const row of dataRows) {
-          const customerName = getCell(row, headers, 'customer_name');
+          const customerName = normalizeText(getCell(row, headers, 'customer_name'));
           if (!customerName) continue;
-          const sourceRaw = getCell(row, headers, 'source');
+          const sourceRaw = normalizeText(getCell(row, headers, 'source'));
           const source = sourceRaw ? normalizeSource(sourceRaw) : undefined;
           if (sourceRaw && !source) continue;
-          const mediumRaw = getCell(row, headers, 'medium');
+          const mediumRaw = normalizeText(getCell(row, headers, 'medium'));
           const medium = mediumRaw ? normalizeMedium(mediumRaw) : undefined;
           if (mediumRaw && !medium) continue;
           const targetValue =
@@ -92,10 +92,10 @@ export class SheetsClient {
       if (!hasDataColumns) continue;
 
       for (const row of dataRows) {
-        const customerName = getCell(row, headers, 'customer_name');
-        const dateRaw = getCell(row, headers, 'date');
-        const sourceRaw = getCell(row, headers, 'source');
-        const mediumRaw = getCell(row, headers, 'medium');
+        const customerName = normalizeText(getCell(row, headers, 'customer_name'));
+        const dateRaw = normalizeText(getCell(row, headers, 'date'));
+        const sourceRaw = normalizeText(getCell(row, headers, 'source'));
+        const mediumRaw = normalizeText(getCell(row, headers, 'medium'));
         const spend = parseNumber(getCell(row, headers, 'spend'));
         if (!customerName || !dateRaw || !sourceRaw || !mediumRaw) continue;
 
@@ -111,7 +111,7 @@ export class SheetsClient {
           source,
           medium,
           date,
-          campaignName: getCell(row, headers, 'campaign_name') || 'Unknown',
+          campaignName: normalizeText(getCell(row, headers, 'campaign_name')) || 'Unknown',
           campaignId: getCell(row, headers, 'campaign_id') || undefined,
           clicks: parseNumber(getCell(row, headers, 'clicks')),
           impressions: parseNumber(getCell(row, headers, 'impressions')),
@@ -153,7 +153,7 @@ function parseNumber(value: any): number {
 }
 
 function normalizeSource(value: string): SourcePlatform | null {
-  const normalized = value.toLowerCase();
+  const normalized = value.toLowerCase().trim();
   if (normalized.includes('bing')) return 'Bing';
   if (normalized.includes('google')) return 'Google';
   return null;
@@ -163,6 +163,10 @@ function normalizeMedium(value: string): MediumType | null {
   const normalized = value.toLowerCase().trim();
   if (normalized === 'cpc') return 'cpc';
   return null;
+}
+
+function normalizeText(value: string): string {
+  return String(value ?? '').trim().replace(/\s+/g, ' ');
 }
 
 function parseDate(value: string): Date | null {
