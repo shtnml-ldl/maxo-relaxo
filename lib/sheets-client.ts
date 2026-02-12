@@ -1,9 +1,10 @@
 import { google } from 'googleapis';
-import { DataRow, SourcePlatform } from './types';
+import { DataRow, MediumType, SourcePlatform } from './types';
 
 type TargetRow = {
   customerName: string;
   source?: SourcePlatform;
+  medium?: MediumType;
   target: number;
 };
 
@@ -67,6 +68,10 @@ export class SheetsClient {
           if (!customerName) continue;
           const sourceRaw = getCell(row, headers, 'source');
           const source = sourceRaw ? normalizeSource(sourceRaw) : undefined;
+          if (sourceRaw && !source) continue;
+          const mediumRaw = getCell(row, headers, 'medium');
+          const medium = mediumRaw ? normalizeMedium(mediumRaw) : undefined;
+          if (mediumRaw && !medium) continue;
           const targetValue =
             parseNumber(getCell(row, headers, 'target')) ||
             parseNumber(getCell(row, headers, 'monthly_target')) ||
@@ -78,6 +83,7 @@ export class SheetsClient {
           targets.push({
             customerName,
             source,
+            medium,
             target: targetValue
           });
         }
@@ -89,16 +95,21 @@ export class SheetsClient {
         const customerName = getCell(row, headers, 'customer_name');
         const dateRaw = getCell(row, headers, 'date');
         const sourceRaw = getCell(row, headers, 'source');
+        const mediumRaw = getCell(row, headers, 'medium');
         const spend = parseNumber(getCell(row, headers, 'spend'));
-        if (!customerName || !dateRaw || !sourceRaw) continue;
+        if (!customerName || !dateRaw || !sourceRaw || !mediumRaw) continue;
 
         const source = normalizeSource(sourceRaw);
+        if (!source) continue;
+        const medium = normalizeMedium(mediumRaw);
+        if (!medium) continue;
         const date = parseDate(dateRaw);
         if (!date) continue;
 
         rows.push({
           customerName,
           source,
+          medium,
           date,
           campaignName: getCell(row, headers, 'campaign_name') || 'Unknown',
           campaignId: getCell(row, headers, 'campaign_id') || undefined,
@@ -141,9 +152,17 @@ function parseNumber(value: any): number {
   return parsed;
 }
 
-function normalizeSource(value: string): SourcePlatform {
+function normalizeSource(value: string): SourcePlatform | null {
   const normalized = value.toLowerCase();
-  return normalized.includes('bing') ? 'Bing' : 'Google';
+  if (normalized.includes('bing')) return 'Bing';
+  if (normalized.includes('google')) return 'Google';
+  return null;
+}
+
+function normalizeMedium(value: string): MediumType | null {
+  const normalized = value.toLowerCase().trim();
+  if (normalized === 'cpc') return 'cpc';
+  return null;
 }
 
 function parseDate(value: string): Date | null {

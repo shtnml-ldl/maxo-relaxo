@@ -36,7 +36,7 @@ export async function GET() {
 
     const targetMap = new Map<string, number>();
     for (const target of targets) {
-      const key = `${target.customerName}|${target.source ?? 'ALL'}`;
+      const key = `${target.customerName}|${target.source ?? 'ALL'}|${target.medium ?? 'ALL'}`;
       targetMap.set(key, target.target);
     }
 
@@ -99,9 +99,14 @@ export async function GET() {
       if (row.customerName.trim().toLowerCase() === 'hof van saksen nl') {
         continue;
       }
-      const key = `${row.customerName}|${row.source}`;
+      const key = `${row.customerName}|${row.source}|${row.medium}`;
       if (!accountMap.has(key)) {
-        const targetKey = targetMap.get(key) ?? targetMap.get(`${row.customerName}|ALL`) ?? 0;
+        const targetKey =
+          targetMap.get(`${row.customerName}|${row.source}|${row.medium}`) ??
+          targetMap.get(`${row.customerName}|${row.source}|ALL`) ??
+          targetMap.get(`${row.customerName}|ALL|${row.medium}`) ??
+          targetMap.get(`${row.customerName}|ALL|ALL`) ??
+          0;
         accountMap.set(key, {
           key,
           customerName: row.customerName,
@@ -156,7 +161,12 @@ export async function GET() {
       const dayKey = row.date.toISOString().split('T')[0];
       if (includeOptimization) {
         if (!optimizationAccountMap.has(key)) {
-          const targetKey = targetMap.get(key) ?? targetMap.get(`${row.customerName}|ALL`) ?? 0;
+          const targetKey =
+            targetMap.get(`${row.customerName}|${row.source}|${row.medium}`) ??
+            targetMap.get(`${row.customerName}|${row.source}|ALL`) ??
+            targetMap.get(`${row.customerName}|ALL|${row.medium}`) ??
+            targetMap.get(`${row.customerName}|ALL|ALL`) ??
+            0;
           optimizationAccountMap.set(key, {
             key,
             customerName: row.customerName,

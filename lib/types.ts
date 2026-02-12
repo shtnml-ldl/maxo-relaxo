@@ -1,8 +1,10 @@
 export type SourcePlatform = 'Google' | 'Bing';
+export type MediumType = 'cpc';
 
 export interface DataRow {
   customerName: string;
   source: SourcePlatform;
+  medium: MediumType;
   date: Date;
   campaignName: string;
   campaignId?: string;
