@@ -12,9 +12,13 @@ type LandalDebug = {
   rawRows: number;
   rawSpend: number;
   rawSessions: number;
+  rawEventValue: number;
+  rawNumberOfEvents: number;
   includedRows: number;
   includedSpend: number;
   includedSessions: number;
+  includedEventValue: number;
+  includedNumberOfEvents: number;
   invalidSource: number;
   invalidMedium: number;
   invalidDate: number;
@@ -68,9 +72,13 @@ export class SheetsClient {
         rawRows: 0,
         rawSpend: 0,
         rawSessions: 0,
+        rawEventValue: 0,
+        rawNumberOfEvents: 0,
         includedRows: 0,
         includedSpend: 0,
         includedSessions: 0,
+        includedEventValue: 0,
+        includedNumberOfEvents: 0,
         invalidSource: 0,
         invalidMedium: 0,
         invalidDate: 0,
@@ -161,6 +169,8 @@ export class SheetsClient {
           debug.landalNlGoogle.rawRows += 1;
           debug.landalNlGoogle.rawSpend += spend;
           debug.landalNlGoogle.rawSessions += parseNumber(getCell(row, headers, 'sessions'));
+          debug.landalNlGoogle.rawEventValue += parseNumber(getCell(row, headers, 'event_value'));
+          debug.landalNlGoogle.rawNumberOfEvents += parseNumber(getCell(row, headers, 'number_of_events'));
           if (!source) debug.landalNlGoogle.invalidSource += 1;
           if (!medium) debug.landalNlGoogle.invalidMedium += 1;
           if (!date) debug.landalNlGoogle.invalidDate += 1;
@@ -188,6 +198,8 @@ export class SheetsClient {
           debug.landalNlGoogle.includedRows += 1;
           debug.landalNlGoogle.includedSpend += spend;
           debug.landalNlGoogle.includedSessions += parseNumber(getCell(row, headers, 'sessions'));
+          debug.landalNlGoogle.includedEventValue += parseNumber(getCell(row, headers, 'event_value'));
+          debug.landalNlGoogle.includedNumberOfEvents += parseNumber(getCell(row, headers, 'number_of_events'));
         }
       }
     }

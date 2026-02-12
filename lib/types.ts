@@ -86,9 +86,13 @@ export interface MetricsResponse {
       rawRows: number;
       rawSpend: number;
       rawSessions: number;
+      rawEventValue: number;
+      rawNumberOfEvents: number;
       includedRows: number;
       includedSpend: number;
       includedSessions: number;
+      includedEventValue: number;
+      includedNumberOfEvents: number;
       invalidSource: number;
       invalidMedium: number;
       invalidDate: number;

@@ -91,6 +91,12 @@ export default function HomePage() {
                 <div className="text-gray-500">
                   Sessions {debug.landalNlGoogle.rawSessions.toLocaleString('en-US')}
                 </div>
+                <div className="text-gray-500">
+                  Event value {debug.landalNlGoogle.rawEventValue.toLocaleString('en-US')}
+                </div>
+                <div className="text-gray-500">
+                  Bookings {debug.landalNlGoogle.rawNumberOfEvents.toLocaleString('en-US')}
+                </div>
               </div>
               <div>
                 <div className="text-xs uppercase text-gray-400">Included rows</div>
@@ -100,6 +106,12 @@ export default function HomePage() {
                 </div>
                 <div className="text-gray-500">
                   Sessions {debug.landalNlGoogle.includedSessions.toLocaleString('en-US')}
+                </div>
+                <div className="text-gray-500">
+                  Event value {debug.landalNlGoogle.includedEventValue.toLocaleString('en-US')}
+                </div>
+                <div className="text-gray-500">
+                  Bookings {debug.landalNlGoogle.includedNumberOfEvents.toLocaleString('en-US')}
                 </div>
               </div>
               <div>
