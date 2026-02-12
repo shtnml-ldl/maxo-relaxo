@@ -47,8 +47,14 @@ export interface OptimizationRow {
   monthToDateSpend: number;
   avgDailySpend7: number;
   optimizedAvgDailySpend: number;
+  roas14: number;
   roas30: number;
-  convRate30: number;
+  roas60: number;
+  spend14: number;
+  spend30: number;
+  spend60: number;
+  trend: 'Improving' | 'Declining' | 'Flat';
+  action: 'Increase' | 'Decrease' | 'Hold';
 }
 
 export interface MetricsResponse {
