@@ -167,13 +167,21 @@ function normalizeMedium(value: string): MediumType | null {
 
 function parseDate(value: string): Date | null {
   if (!value) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [year, month, day] = value.split('-').map(Number);
+  const cleaned = String(value).trim();
+  let normalized = cleaned;
+  if (normalized.startsWith("'")) {
+    normalized = normalized.slice(1);
+  }
+  if (normalized.startsWith('"') && normalized.endsWith('"')) {
+    normalized = normalized.slice(1, -1);
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    const [year, month, day] = normalized.split('-').map(Number);
     return new Date(year, month - 1, day);
   }
 
-  if (value.includes('/')) {
-    const parts = value.split('/');
+  if (normalized.includes('/')) {
+    const parts = normalized.split('/');
     if (parts.length === 3) {
       const month = Number(parts[0]);
       const day = Number(parts[1]);
@@ -185,6 +193,6 @@ function parseDate(value: string): Date | null {
     }
   }
 
-  const date = new Date(value);
+  const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
