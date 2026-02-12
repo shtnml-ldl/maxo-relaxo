@@ -103,7 +103,8 @@ export async function GET() {
     >();
 
     for (const row of rows) {
-      if (row.customerName.trim().toLowerCase() === 'hof van saksen nl') {
+      const customerNameKey = row.customerName.trim().toLowerCase();
+      if (customerNameKey === 'hof van saksen nl' || customerNameKey === 'landal uk') {
         continue;
       }
       const key = `${row.customerName}|${row.source}|${row.medium}`;
