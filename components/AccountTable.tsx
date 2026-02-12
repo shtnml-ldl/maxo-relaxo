@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { AccountSummary } from '@/lib/types';
 
 interface AccountTableProps {
@@ -9,6 +10,42 @@ interface AccountTableProps {
 export function AccountTable({ accounts }: AccountTableProps) {
   const formatCurrency = (value: number) =>
     `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+
+  const [sortKey, setSortKey] = useState<
+    | 'account'
+    | 'monthToDateSpend'
+    | 'target'
+    | 'percentToTarget'
+    | 'avgDailySpend7'
+    | 'forecastedMonthEndSpend'
+    | null
+  >(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  const sortedAccounts = useMemo(() => {
+    if (!sortKey) return accounts;
+    const sorted = [...accounts];
+    sorted.sort((a, b) => {
+      if (sortKey === 'account') {
+        const nameA = `${a.customerName} ${a.source}`.toLowerCase();
+        const nameB = `${b.customerName} ${b.source}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      }
+      const valueA = a[sortKey];
+      const valueB = b[sortKey];
+      return valueA === valueB ? 0 : valueA > valueB ? 1 : -1;
+    });
+    return sortDirection === 'asc' ? sorted : sorted.reverse();
+  }, [accounts, sortDirection, sortKey]);
+
+  const toggleSort = (key: NonNullable<typeof sortKey>) => {
+    if (sortKey === key) {
+      setSortDirection((value) => (value === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -20,16 +57,44 @@ export function AccountTable({ accounts }: AccountTableProps) {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th className="px-4 py-3 text-left">Account</th>
-              <th className="px-4 py-3 text-right">Spend MTD</th>
-              <th className="px-4 py-3 text-right">Target</th>
-              <th className="px-4 py-3 text-right">% to Target</th>
-              <th className="px-4 py-3 text-right">Avg Daily (7d)</th>
-              <th className="px-4 py-3 text-right">Forecast Month-End</th>
+              <th className="px-4 py-3 text-left">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('account')}>
+                  Account
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('monthToDateSpend')}>
+                  Spend MTD
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('target')}>
+                  Target
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('percentToTarget')}>
+                  % to Target
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('avgDailySpend7')}>
+                  Avg Daily (7d)
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  className="hover:text-gray-700"
+                  onClick={() => toggleSort('forecastedMonthEndSpend')}
+                >
+                  Forecast Month-End
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {accounts.map((account) => (
+            {sortedAccounts.map((account) => (
               <tr key={account.key} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-ink">
                   {account.customerName} - {account.source}

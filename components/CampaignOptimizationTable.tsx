@@ -10,6 +10,22 @@ interface CampaignOptimizationTableProps {
 
 export function CampaignOptimizationTable({ rows, accounts }: CampaignOptimizationTableProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const [sortKey, setSortKey] = useState<
+    | 'campaignName'
+    | 'avgDailySpend7'
+    | 'optimizedAvgDailySpend'
+    | 'delta'
+    | 'roas30'
+    | 'action'
+    | 'roas14'
+    | 'roas60'
+    | 'spend14'
+    | 'spend30'
+    | 'spend60'
+    | 'trend'
+    | null
+  >(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const accountLabelMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -37,7 +53,7 @@ export function CampaignOptimizationTable({ rows, accounts }: CampaignOptimizati
     }
   }, [accountOptions, selectedAccountKey]);
 
-  const filteredRows = rows.filter((row) => row.accountKey === selectedAccountKey);
+  const filteredRows = rows.filter((row) => row.accountKey === selectedAccountKey && row.avgDailySpend7 > 0);
 
   const formatCurrency = (value: number) =>
     `€ ${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
@@ -57,6 +73,37 @@ export function CampaignOptimizationTable({ rows, accounts }: CampaignOptimizati
     if (action === 'Increase') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (action === 'Decrease') return 'bg-rose-50 text-rose-700 border-rose-200';
     return 'bg-gray-100 text-gray-600 border-gray-200';
+  };
+
+  const sortedRows = useMemo(() => {
+    if (!sortKey) return filteredRows;
+    const sorted = [...filteredRows];
+    sorted.sort((a, b) => {
+      if (sortKey === 'campaignName') {
+        return a.campaignName.toLowerCase().localeCompare(b.campaignName.toLowerCase());
+      }
+      if (sortKey === 'action' || sortKey === 'trend') {
+        return String(a[sortKey]).localeCompare(String(b[sortKey]));
+      }
+      if (sortKey === 'delta') {
+        const deltaA = a.optimizedAvgDailySpend - a.avgDailySpend7;
+        const deltaB = b.optimizedAvgDailySpend - b.avgDailySpend7;
+        return deltaA === deltaB ? 0 : deltaA > deltaB ? 1 : -1;
+      }
+      const valueA = a[sortKey];
+      const valueB = b[sortKey];
+      return valueA === valueB ? 0 : valueA > valueB ? 1 : -1;
+    });
+    return sortDirection === 'asc' ? sorted : sorted.reverse();
+  }, [filteredRows, sortDirection, sortKey]);
+
+  const toggleSort = (key: NonNullable<typeof sortKey>) => {
+    if (sortKey === key) {
+      setSortDirection((value) => (value === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
   };
 
   return (
@@ -93,24 +140,68 @@ export function CampaignOptimizationTable({ rows, accounts }: CampaignOptimizati
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
             <tr>
-              <th className="px-4 py-3 text-left">Campaign</th>
-              <th className="px-4 py-3 text-right">Avg Daily (7d)</th>
-              <th className="px-4 py-3 text-right">Optimized Avg Daily</th>
-              <th className="px-4 py-3 text-right">Delta</th>
-              <th className="px-4 py-3 text-right">ROAS 30d</th>
-              <th className="px-4 py-3 text-right">Action</th>
+              <th className="px-4 py-3 text-left">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('campaignName')}>
+                  Campaign
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('avgDailySpend7')}>
+                  Avg Daily (7d)
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  className="hover:text-gray-700"
+                  onClick={() => toggleSort('optimizedAvgDailySpend')}
+                >
+                  Optimized Avg Daily
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('delta')}>
+                  Delta
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('roas30')}>
+                  ROAS 30d
+                </button>
+              </th>
+              <th className="px-4 py-3 text-right">
+                <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('action')}>
+                  Action
+                </button>
+              </th>
               {showDetails && (
                 <>
-                  <th className="px-4 py-3 text-right">ROAS 14d</th>
-                  <th className="px-4 py-3 text-right">ROAS 60d</th>
-                  <th className="px-4 py-3 text-right">Spend 14/30/60</th>
-                  <th className="px-4 py-3 text-right">Trend</th>
+                  <th className="px-4 py-3 text-right">
+                    <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('roas14')}>
+                      ROAS 14d
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right">
+                    <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('roas60')}>
+                      ROAS 60d
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right">
+                    <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('spend30')}>
+                      Spend 14/30/60
+                    </button>
+                  </th>
+                  <th className="px-4 py-3 text-right">
+                    <button type="button" className="hover:text-gray-700" onClick={() => toggleSort('trend')}>
+                      Trend
+                    </button>
+                  </th>
                 </>
               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredRows.map((row) => {
+            {sortedRows.map((row) => {
               const delta = row.optimizedAvgDailySpend - row.avgDailySpend7;
               const deltaPercent = row.avgDailySpend7 > 0 ? (delta / row.avgDailySpend7) * 100 : 0;
               return (
@@ -157,7 +248,7 @@ export function CampaignOptimizationTable({ rows, accounts }: CampaignOptimizati
                 </tr>
               );
             })}
-            {filteredRows.length === 0 && (
+            {sortedRows.length === 0 && (
               <tr>
                 <td className="px-4 py-6 text-center text-sm text-gray-500" colSpan={showDetails ? 10 : 6}>
                   No campaign data for this account.
