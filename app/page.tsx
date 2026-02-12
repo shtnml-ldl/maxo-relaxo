@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AccountTable, OptimizationTable, StatCards, TrendChart } from '@/components';
+import {
+  AccountTable,
+  CampaignOptimizationTable,
+  OptimizationTable,
+  StatCards,
+  TrendChart
+} from '@/components';
 import { MetricsResponse } from '@/lib/types';
 
 export default function HomePage() {
@@ -76,6 +82,7 @@ export default function HomePage() {
 
         <OptimizationTable rows={data.optimization} meta={data.meta} />
 
+        <CampaignOptimizationTable rows={data.campaignOptimization} accounts={data.accounts} />
       </div>
     </main>
   );

@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { SheetsClient } from '@/lib/sheets-client';
-import { AccountSummary, MetricsResponse, OptimizationRow, TrendPoint } from '@/lib/types';
+import {
+  AccountSummary,
+  CampaignOptimizationRow,
+  MediumType,
+  MetricsResponse,
+  OptimizationRow,
+  TrendPoint
+} from '@/lib/types';
 
 export async function GET() {
   try {
@@ -85,6 +92,39 @@ export async function GET() {
     >();
     const optimizationDailySpendMap = new Map<string, Map<string, number>>();
     const optimizationWindowMap = new Map<
+      string,
+      {
+        spend14: number;
+        spend30: number;
+        spend60: number;
+        revenue14: number;
+        revenue30: number;
+        revenue60: number;
+        bookings14: number;
+        bookings30: number;
+        bookings60: number;
+        clicks14: number;
+        clicks30: number;
+        clicks60: number;
+      }
+    >();
+    const campaignMap = new Map<
+      string,
+      {
+        key: string;
+        accountKey: string;
+        customerName: string;
+        source: AccountSummary['source'];
+        medium: MediumType;
+        campaignName: string;
+        last7DaySpend: number;
+        last7DayRevenue: number;
+        last7DayBookings: number;
+        last7DayClicks: number;
+      }
+    >();
+    const campaignDailySpendMap = new Map<string, Map<string, number>>();
+    const campaignWindowMap = new Map<
       string,
       {
         spend14: number;
@@ -246,6 +286,71 @@ export async function GET() {
           window.clicks60 += row.clicks;
         }
         optimizationWindowMap.set(key, window);
+
+        const campaignKey = `${key}|${row.campaignName}`;
+        if (!campaignMap.has(campaignKey)) {
+          campaignMap.set(campaignKey, {
+            key: campaignKey,
+            accountKey: key,
+            customerName: row.customerName,
+            source: row.source,
+            medium: row.medium,
+            campaignName: row.campaignName,
+            last7DaySpend: 0,
+            last7DayRevenue: 0,
+            last7DayBookings: 0,
+            last7DayClicks: 0
+          });
+        }
+
+        const campaign = campaignMap.get(campaignKey)!;
+        if (row.date >= last7Start && row.date <= latestDate) {
+          campaign.last7DaySpend += row.spend;
+          campaign.last7DayRevenue += row.eventValue;
+          campaign.last7DayBookings += row.numberOfEvents;
+          campaign.last7DayClicks += row.clicks;
+        }
+
+        if (!campaignDailySpendMap.has(campaignKey)) {
+          campaignDailySpendMap.set(campaignKey, new Map<string, number>());
+        }
+        const campaignPerDay = campaignDailySpendMap.get(campaignKey)!;
+        campaignPerDay.set(dayKey, (campaignPerDay.get(dayKey) || 0) + row.spend);
+
+        const campaignWindow = campaignWindowMap.get(campaignKey) || {
+          spend14: 0,
+          spend30: 0,
+          spend60: 0,
+          revenue14: 0,
+          revenue30: 0,
+          revenue60: 0,
+          bookings14: 0,
+          bookings30: 0,
+          bookings60: 0,
+          clicks14: 0,
+          clicks30: 0,
+          clicks60: 0
+        };
+
+        if (row.date >= last14Start && row.date <= latestDate) {
+          campaignWindow.spend14 += row.spend;
+          campaignWindow.revenue14 += row.eventValue;
+          campaignWindow.bookings14 += row.numberOfEvents;
+          campaignWindow.clicks14 += row.clicks;
+        }
+        if (row.date >= last30Start && row.date <= latestDate) {
+          campaignWindow.spend30 += row.spend;
+          campaignWindow.revenue30 += row.eventValue;
+          campaignWindow.bookings30 += row.numberOfEvents;
+          campaignWindow.clicks30 += row.clicks;
+        }
+        if (row.date >= last60Start && row.date <= latestDate) {
+          campaignWindow.spend60 += row.spend;
+          campaignWindow.revenue60 += row.eventValue;
+          campaignWindow.bookings60 += row.numberOfEvents;
+          campaignWindow.clicks60 += row.clicks;
+        }
+        campaignWindowMap.set(campaignKey, campaignWindow);
       }
 
       if (!dailySpendMap.has(key)) {
@@ -424,8 +529,6 @@ export async function GET() {
       const score = account.roas30Effective * (1 + account.convRate30Effective * 2);
       return score > 0 ? score : 0.01;
     });
-    const weightSum = weights.reduce((sum, value) => sum + value, 0) || 1;
-
     const caps = optimizationAccounts.map((account, index) => {
       const base = account.baseDailyForCap;
       return {
@@ -435,8 +538,12 @@ export async function GET() {
       };
     });
 
-    const allocateWithCaps = (total: number) => {
-      const allocations = caps.map((cap) => ({
+    const allocateWithCaps = (
+      total: number,
+      items: { weight: number; min: number; max: number }[]
+    ) => {
+      const weightSum = items.reduce((sum, item) => sum + item.weight, 0) || 1;
+      const allocations = items.map((cap) => ({
         weight: cap.weight,
         min: cap.min,
         max: cap.max,
@@ -467,7 +574,7 @@ export async function GET() {
       return allocations.map((item) => item.allocation);
     };
 
-    const allocations = allocateWithCaps(optimizationDailyBudget);
+    const allocations = allocateWithCaps(optimizationDailyBudget, caps);
 
     optimizationAccounts.forEach((account, index) => {
       const optimizedAvgDailySpend = allocations[index] ?? account.avgDailySpend7;
@@ -496,6 +603,127 @@ export async function GET() {
       });
     });
 
+    const campaignOptimization: CampaignOptimizationRow[] = [];
+    const accountBudgetMap = new Map(
+      optimizationAccounts.map((account) => [account.key, account.avgDailySpend7])
+    );
+
+    const campaignSummaries = Array.from(campaignMap.values()).map((campaign) => {
+      const dailySpend = campaignDailySpendMap.get(campaign.key) || new Map<string, number>();
+      const activeDays7 = Array.from(dailySpend.keys()).filter((dateStr) => {
+        const date = new Date(dateStr);
+        return date >= last7Start && date <= latestDate;
+      }).length;
+
+      const avgDailySpend7 = activeDays7 > 0 ? campaign.last7DaySpend / activeDays7 : 0;
+      const window = campaignWindowMap.get(campaign.key) || {
+        spend14: 0,
+        spend30: 0,
+        spend60: 0,
+        revenue14: 0,
+        revenue30: 0,
+        revenue60: 0,
+        bookings14: 0,
+        bookings30: 0,
+        bookings60: 0,
+        clicks14: 0,
+        clicks30: 0,
+        clicks60: 0
+      };
+
+      const roas14 = window.spend14 > 0 ? window.revenue14 / window.spend14 : 0;
+      const roas30 = window.spend30 > 0 ? window.revenue30 / window.spend30 : 0;
+      const roas60 = window.spend60 > 0 ? window.revenue60 / window.spend60 : 0;
+      const convRate30 = window.clicks30 > 0 ? window.bookings30 / window.clicks30 : 0;
+      const baseDailyForCap = avgDailySpend7 > 0 ? avgDailySpend7 : (window.spend30 > 0 ? window.spend30 / 30 : 0);
+      const hasTrendData = window.spend14 > 0 && window.spend30 > 0 && window.spend60 > 0;
+      let trend: CampaignOptimizationRow['trend'] = 'Flat';
+      if (hasTrendData) {
+        if (roas14 > roas30 && roas30 > roas60) {
+          trend = 'Improving';
+        } else if (roas14 < roas30 && roas30 < roas60) {
+          trend = 'Declining';
+        }
+      }
+
+      return {
+        key: campaign.key,
+        accountKey: campaign.accountKey,
+        customerName: campaign.customerName,
+        source: campaign.source,
+        medium: campaign.medium,
+        campaignName: campaign.campaignName,
+        avgDailySpend7,
+        roas14,
+        roas30,
+        roas60,
+        spend14: window.spend14,
+        spend30: window.spend30,
+        spend60: window.spend60,
+        convRate30,
+        baseDailyForCap,
+        trend
+      };
+    });
+
+    const campaignsByAccount = new Map<string, typeof campaignSummaries>();
+    campaignSummaries.forEach((campaign) => {
+      if (!campaignsByAccount.has(campaign.accountKey)) {
+        campaignsByAccount.set(campaign.accountKey, []);
+      }
+      campaignsByAccount.get(campaign.accountKey)!.push(campaign);
+    });
+
+    campaignsByAccount.forEach((campaigns, accountKey) => {
+      const accountBudget = accountBudgetMap.get(accountKey) ?? 0;
+      if (campaigns.length === 0) return;
+
+      const weights = campaigns.map((campaign) => {
+        const score = campaign.roas30 * (1 + campaign.convRate30 * 2);
+        return score > 0 ? score : 0.01;
+      });
+
+      const caps = campaigns.map((campaign, index) => {
+        const base = campaign.baseDailyForCap;
+        return {
+          weight: weights[index],
+          min: Math.max(0, base * (1 - maxShift)),
+          max: Math.max(0, base * (1 + maxShift))
+        };
+      });
+
+      const allocations = accountBudget > 0 ? allocateWithCaps(accountBudget, caps) : [];
+
+      campaigns.forEach((campaign, index) => {
+        const optimizedAvgDailySpend = allocations[index] ?? campaign.avgDailySpend7;
+        let action: CampaignOptimizationRow['action'] = 'Hold';
+        if (campaign.roas30 >= roasThreshold && optimizedAvgDailySpend > campaign.avgDailySpend7) {
+          action = 'Increase';
+        } else if (campaign.roas30 < roasThreshold && optimizedAvgDailySpend < campaign.avgDailySpend7) {
+          action = 'Decrease';
+        }
+
+        campaignOptimization.push({
+          key: campaign.key,
+          accountKey: campaign.accountKey,
+          customerName: campaign.customerName,
+          source: campaign.source,
+          medium: campaign.medium,
+          campaignName: campaign.campaignName,
+          avgDailySpend7: campaign.avgDailySpend7,
+          optimizedAvgDailySpend,
+          roas14: campaign.roas14,
+          roas30: campaign.roas30,
+          roas60: campaign.roas60,
+          spend14: campaign.spend14,
+          spend30: campaign.spend30,
+          spend60: campaign.spend60,
+          trend: campaign.trend,
+          action
+        });
+      });
+    });
+
     const response: MetricsResponse = {
       meta: {
         latestDate: latestDate.toISOString().split('T')[0],
@@ -512,7 +740,8 @@ export async function GET() {
       totals,
       accounts,
       trends: trendMap,
-      optimization
+      optimization,
+      campaignOptimization
     };
 
     return NextResponse.json(response);
