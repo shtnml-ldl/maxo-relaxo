@@ -46,9 +46,7 @@ export function OptimizationTable({ rows, meta }: OptimizationTableProps) {
             Recommended daily spend to maximize weighted ROAS and revenue
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Dates included: MTD {meta.monthStart} to {meta.latestDate}. ROAS windows: 14d{' '}
-            {meta.last14Start} to {meta.latestDate}, 30d {meta.last30Start} to {meta.latestDate}, 60d{' '}
-            {meta.last60Start} to {meta.latestDate}.
+            Dates included: MTD {meta.monthStart} to {meta.latestDate}
           </p>
           <p className="text-xs text-gray-400">
             Max date found in current month: {meta.maxDateInCurrentMonth}.
