@@ -81,4 +81,27 @@ export interface MetricsResponse {
   accounts: AccountSummary[];
   trends: Record<string, TrendPoint[]>;
   optimization: OptimizationRow[];
+  debug?: {
+    landalNlGoogle: {
+      rawRows: number;
+      rawSpend: number;
+      rawSessions: number;
+      includedRows: number;
+      includedSpend: number;
+      includedSessions: number;
+      invalidSource: number;
+      invalidMedium: number;
+      invalidDate: number;
+      missingSource: number;
+      missingMedium: number;
+      missingDate: number;
+      missingSpend: number;
+    };
+    sheets: {
+      name: string;
+      rowCount: number;
+      hasDataColumns: boolean;
+      hasTargetColumns: boolean;
+    }[];
+  };
 }

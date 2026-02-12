@@ -8,6 +8,32 @@ type TargetRow = {
   target: number;
 };
 
+type LandalDebug = {
+  rawRows: number;
+  rawSpend: number;
+  rawSessions: number;
+  includedRows: number;
+  includedSpend: number;
+  includedSessions: number;
+  invalidSource: number;
+  invalidMedium: number;
+  invalidDate: number;
+  missingSource: number;
+  missingMedium: number;
+  missingDate: number;
+  missingSpend: number;
+};
+
+type SheetsDebug = {
+  landalNlGoogle: LandalDebug;
+  sheets: {
+    name: string;
+    rowCount: number;
+    hasDataColumns: boolean;
+    hasTargetColumns: boolean;
+  }[];
+};
+
 export class SheetsClient {
   private sheets;
   private sheetId: string;
@@ -26,6 +52,7 @@ export class SheetsClient {
     rows: DataRow[];
     targets: TargetRow[];
     sheetNames: string[];
+    debug: SheetsDebug;
   }> {
     const meta = await this.sheets.spreadsheets.get({
       spreadsheetId: this.sheetId
@@ -36,6 +63,25 @@ export class SheetsClient {
 
     const rows: DataRow[] = [];
     const targets: TargetRow[] = [];
+    const debug: SheetsDebug = {
+      landalNlGoogle: {
+        rawRows: 0,
+        rawSpend: 0,
+        rawSessions: 0,
+        includedRows: 0,
+        includedSpend: 0,
+        includedSessions: 0,
+        invalidSource: 0,
+        invalidMedium: 0,
+        invalidDate: 0,
+        missingSource: 0,
+        missingMedium: 0,
+        missingDate: 0,
+        missingSpend: 0
+      },
+      sheets: []
+    };
+    const debugCustomerKey = 'landal nl';
 
     for (const sheetName of sheetNames) {
       const response = await this.sheets.spreadsheets.values.get({
@@ -61,6 +107,13 @@ export class SheetsClient {
           headerIndex(headers, 'monthly_target') !== -1 ||
           headerIndex(headers, 'target_spend') !== -1 ||
           headerIndex(headers, 'monthly_budget') !== -1);
+
+      debug.sheets.push({
+        name: sheetName,
+        rowCount: dataRows.length,
+        hasDataColumns,
+        hasTargetColumns
+      });
 
       if (hasTargetColumns) {
         for (const row of dataRows) {
@@ -99,11 +152,22 @@ export class SheetsClient {
         const spend = parseNumber(getCell(row, headers, 'spend'));
         if (!customerName || !dateRaw || !sourceRaw || !mediumRaw) continue;
 
+        const isLandalNl = customerName.toLowerCase() === debugCustomerKey;
         const source = normalizeSource(sourceRaw);
-        if (!source) continue;
         const medium = normalizeMedium(mediumRaw);
-        if (!medium) continue;
         const date = parseDate(dateRaw);
+
+        if (isLandalNl && sourceRaw.toLowerCase().includes('google') && mediumRaw.toLowerCase().includes('cpc')) {
+          debug.landalNlGoogle.rawRows += 1;
+          debug.landalNlGoogle.rawSpend += spend;
+          debug.landalNlGoogle.rawSessions += parseNumber(getCell(row, headers, 'sessions'));
+          if (!source) debug.landalNlGoogle.invalidSource += 1;
+          if (!medium) debug.landalNlGoogle.invalidMedium += 1;
+          if (!date) debug.landalNlGoogle.invalidDate += 1;
+        }
+
+        if (!source) continue;
+        if (!medium) continue;
         if (!date) continue;
 
         rows.push({
@@ -119,10 +183,16 @@ export class SheetsClient {
           eventValue: parseNumber(getCell(row, headers, 'event_value')),
           spend
         });
+
+        if (isLandalNl && source === 'Google' && medium === 'cpc') {
+          debug.landalNlGoogle.includedRows += 1;
+          debug.landalNlGoogle.includedSpend += spend;
+          debug.landalNlGoogle.includedSessions += parseNumber(getCell(row, headers, 'sessions'));
+        }
       }
     }
 
-    return { rows, targets, sheetNames };
+    return { rows, targets, sheetNames, debug };
   }
 }
 

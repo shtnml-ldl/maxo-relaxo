@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     const sheetsClient = new SheetsClient();
-    const { rows, targets } = await sheetsClient.fetchAllSheets();
+    const { rows, targets, debug } = await sheetsClient.fetchAllSheets();
 
     if (rows.length === 0) {
       return NextResponse.json(
@@ -512,7 +512,8 @@ export async function GET() {
       totals,
       accounts,
       trends: trendMap,
-      optimization
+      optimization,
+      debug
     };
 
     return NextResponse.json(response);
