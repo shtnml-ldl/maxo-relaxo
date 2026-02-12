@@ -83,7 +83,7 @@ export class SheetsClient {
           targets.push({
             customerName,
             source: source ?? undefined,
-            medium,
+            medium: medium ?? undefined,
             target: targetValue
           });
         }
