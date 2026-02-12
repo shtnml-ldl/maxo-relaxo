@@ -28,8 +28,8 @@ export interface AccountSummary {
   last7DayRevenue: number;
   last7DayBookings: number;
   last7DayClicks: number;
-  roas7: number;
-  convRate7: number;
+  roas30: number;
+  convRate30: number;
   percentToTarget: number;
 }
 
@@ -47,8 +47,8 @@ export interface OptimizationRow {
   monthToDateSpend: number;
   avgDailySpend7: number;
   optimizedAvgDailySpend: number;
-  roas7: number;
-  convRate7: number;
+  roas30: number;
+  convRate30: number;
 }
 
 export interface MetricsResponse {

@@ -45,8 +45,14 @@ export async function GET() {
 
     const last7Start = new Date(latestDate);
     last7Start.setDate(last7Start.getDate() - 6);
+    const last30Start = new Date(latestDate);
+    last30Start.setDate(last30Start.getDate() - 29);
 
     const dailySpendMap = new Map<string, Map<string, number>>();
+    const last30Map = new Map<
+      string,
+      { spend: number; revenue: number; bookings: number; clicks: number }
+    >();
 
     for (const row of rows) {
       const key = `${row.customerName}|${row.source}`;
@@ -67,8 +73,8 @@ export async function GET() {
           last7DayRevenue: 0,
           last7DayBookings: 0,
           last7DayClicks: 0,
-          roas7: 0,
-          convRate7: 0,
+          roas30: 0,
+          convRate30: 0,
           percentToTarget: 0
         });
       }
@@ -86,6 +92,20 @@ export async function GET() {
         account.last7DayRevenue += row.eventValue;
         account.last7DayBookings += row.numberOfEvents;
         account.last7DayClicks += row.clicks;
+      }
+
+      if (row.date >= last30Start && row.date <= latestDate) {
+        const last30 = last30Map.get(key) || {
+          spend: 0,
+          revenue: 0,
+          bookings: 0,
+          clicks: 0
+        };
+        last30.spend += row.spend;
+        last30.revenue += row.eventValue;
+        last30.bookings += row.numberOfEvents;
+        last30.clicks += row.clicks;
+        last30Map.set(key, last30);
       }
 
       if (!dailySpendMap.has(key)) {
@@ -106,14 +126,20 @@ export async function GET() {
 
       account.avgDailySpend7 = activeDays7 > 0 ? account.last7DaySpend / activeDays7 : 0;
       account.forecastedMonthEndSpend = account.monthToDateSpend + (account.avgDailySpend7 * remainingDays);
-      const roas7 = account.last7DaySpend > 0 ? account.last7DayRevenue / account.last7DaySpend : 0;
+      const last30 = last30Map.get(account.key) || {
+        spend: 0,
+        revenue: 0,
+        bookings: 0,
+        clicks: 0
+      };
+      const roas30 = last30.spend > 0 ? last30.revenue / last30.spend : 0;
       const roasMtd = account.monthToDateSpend > 0 ? account.monthToDateRevenue / account.monthToDateSpend : 0;
-      const convRate7 = account.last7DayClicks > 0 ? account.last7DayBookings / account.last7DayClicks : 0;
+      const convRate30 = last30.clicks > 0 ? last30.bookings / last30.clicks : 0;
       const convRateMtd = account.monthToDateClicks > 0
         ? account.monthToDateBookings / account.monthToDateClicks
         : 0;
-      account.roas7 = roas7 > 0 ? roas7 : roasMtd;
-      account.convRate7 = convRate7 > 0 ? convRate7 : convRateMtd;
+      account.roas30 = roas30 > 0 ? roas30 : roasMtd;
+      account.convRate30 = convRate30 > 0 ? convRate30 : convRateMtd;
       account.percentToTarget = account.target > 0 ? account.monthToDateSpend / account.target : 0;
       accounts.push(account);
 
@@ -172,7 +198,7 @@ export async function GET() {
 
     const optimization: OptimizationRow[] = [];
     const weights = accounts.map((account) => {
-      const score = account.roas7 * (1 + account.convRate7 * 2);
+      const score = account.roas30 * (1 + account.convRate30 * 2);
       return score > 0 ? score : 0.01;
     });
     const weightSum = weights.reduce((sum, value) => sum + value, 0) || 1;
@@ -189,8 +215,8 @@ export async function GET() {
         monthToDateSpend: account.monthToDateSpend,
         avgDailySpend7: account.avgDailySpend7,
         optimizedAvgDailySpend,
-        roas7: account.roas7,
-        convRate7: account.convRate7
+        roas30: account.roas30,
+        convRate30: account.convRate30
       });
     });
 
