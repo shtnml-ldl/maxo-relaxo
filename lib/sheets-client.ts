@@ -166,7 +166,14 @@ function normalizeMedium(value: string): MediumType | null {
 }
 
 function normalizeText(value: string): string {
-  return String(value ?? '').trim().replace(/\s+/g, ' ');
+  let normalized = String(value ?? '').trim();
+  if (normalized.startsWith("'")) {
+    normalized = normalized.slice(1);
+  }
+  if (normalized.startsWith('"') && normalized.endsWith('"')) {
+    normalized = normalized.slice(1, -1);
+  }
+  return normalized.trim().replace(/\s+/g, ' ');
 }
 
 function parseDate(value: string): Date | null {
