@@ -55,6 +55,9 @@ export async function GET() {
     >();
 
     for (const row of rows) {
+      if (row.customerName.trim().toLowerCase() === 'hof van saksen nl') {
+        continue;
+      }
       const key = `${row.customerName}|${row.source}`;
       if (!accountMap.has(key)) {
         const targetKey = targetMap.get(key) ?? targetMap.get(`${row.customerName}|ALL`) ?? 0;
